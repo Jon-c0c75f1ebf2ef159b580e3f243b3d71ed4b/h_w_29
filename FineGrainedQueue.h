@@ -7,54 +7,54 @@
 
 #pragma once
 #include <mutex>
-//#include <shared_mutex>
-//#include <condition_variable>
+#include <iostream>
+#include <thread>
 
 struct Node
 {
-  int _value;
-  Node* _next;
-  std::mutex* _node_mutex;
-  Node(int value, Node* ptr) : _value(value), _next(ptr) {}
+    int _value;
+    Node* _next;
+    std::mutex* _node_mutex;
+    Node(int value, Node* ptr = nullptr) : _value(value), _next(ptr) { _node_mutex = new std::mutex; }
+    ~Node() { delete _node_mutex; }
 };
 
 class FineGrainedQueue
 {
 public:
-  Node* _head;
-  std::mutex* _queue_mutex;
-  FineGrainedQueue(Node* node) : _head(node) {_queue_mutex = new std::mutex;};
-  ~FineGrainedQueue() {        delete _queue_mutex;    }
-  void insertIntoMiddle(int value, int pos) {
-
-        Node* insertNode = new Node{value, nullptr};
-        Node* cur = _head;
-        Node* tmp = nullptr;
-        int i = 0;
-      
-        {
-            //очередь не пустая
-            //вставляется элемент в середину или конец списка, то есть вставку в начало списка не нужно рассматривать
-            tmp = cur;
-            cur = cur->_next;
-            i++;
-        }
-      
-        while(true) {
-          
+    Node* _head;
+    std::mutex* _queue_mutex;
+    FineGrainedQueue(Node* node) : _head(node) { _queue_mutex = new std::mutex; };
+    ~FineGrainedQueue() { delete _queue_mutex; }
+    void insertIntoMiddle(int value, int pos) {
+        std::unique_lock<std::mutex> guard(*(_queue_mutex));
+        Node* insertNode = new Node{ value, nullptr };
+        //очередь не пустая
+        //вставляется элемент в середину или конец списка, то есть вставку в начало списка не нужно рассматривать
+        //соответственно начинаем со второй позиции
+        Node* cur = _head->_next;
+        Node* tmp = _head;
+        int i = 1;
+        while (true){
             //если pos больше длины списка, то нужно вставить элемент в конец списка.
-            if (i == pos || cur == nullptr) {
+            if (i >= pos || cur == nullptr) {
                 //insert
-                insertNode->_next = cur;
                 tmp->_next = insertNode;
+                insertNode->_next = cur;
                 break;
             }
-            
             ++i;
+            tmp = cur;
             cur = cur->_next;
         }
-        
-        
+    }
+    
+    void _cout() {
+        Node* cur = _head;
+        while (cur != nullptr){
+        std::cout << cur->_value << "\n";
+        cur = cur->_next;
+        }
     }
 };
 
