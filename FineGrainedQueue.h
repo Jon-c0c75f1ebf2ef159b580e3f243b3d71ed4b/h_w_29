@@ -37,12 +37,11 @@ public:
         prev = _head; 
         cur = prev->_next;
         prev->_node_mutex->lock();
-        _queue_mutex->unlock();
         if (cur) {// проверили и только потом залочили
             cur->_node_mutex->lock();
         }
+        _queue_mutex->unlock();
         
-
         while (true) {
             //если pos больше длины списка, то нужно вставить элемент в конец списка.
             if (i >= pos || cur == nullptr) {
@@ -55,11 +54,9 @@ public:
                 break;
             }
             ++i;
-
             Node* old_prev = prev;
             prev = cur;
-            cur = cur->_next;            
-
+            cur = cur->_next;          
             if (cur) {// проверили и только потом залочили
                 cur->_node_mutex->lock();
             }
@@ -76,6 +73,3 @@ public:
         }
     }
 };
-
-
-
